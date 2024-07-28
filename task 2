@@ -1,0 +1,79 @@
+import yfinance as yf
+
+class StockPortfolio:
+    def __init__(self):
+        self.portfolio = {}
+
+    def add_stock(self, ticker, quantity):
+        """Add a stock to the portfolio."""
+        if ticker in self.portfolio:
+            self.portfolio[ticker]['quantity'] += quantity
+        else:
+            self.portfolio[ticker] = {'quantity': quantity, 'price': self.get_current_price(ticker)}
+
+    def remove_stock(self, ticker, quantity):
+        """Remove a stock from the portfolio."""
+        if ticker in self.portfolio:
+            if self.portfolio[ticker]['quantity'] > quantity:
+                self.portfolio[ticker]['quantity'] -= quantity
+            elif self.portfolio[ticker]['quantity'] == quantity:
+                del self.portfolio[ticker]
+            else:
+                print(f"Error: Trying to remove more stocks than available.")
+        else:
+            print(f"Error: Stock {ticker} not in portfolio.")
+
+    def get_current_price(self, ticker):
+        """Fetch the current price of the stock."""
+        try:
+            stock = yf.Ticker(ticker)
+            return stock.history(period='1d').iloc[-1]['Close']
+        except Exception as e:
+            print(f"Error fetching price for {ticker}: {e}")
+            return None
+
+    def get_portfolio_value(self):
+        """Calculate the total value of the portfolio."""
+        total_value = 0
+        for ticker, info in self.portfolio.items():
+            price = self.get_current_price(ticker)
+            if price:
+                total_value += price * info['quantity']
+        return total_value
+
+    def display_portfolio(self):
+        """Display the portfolio with current prices and total value."""
+        print("\nPortfolio:")
+        for ticker, info in self.portfolio.items():
+            current_price = self.get_current_price(ticker)
+            if current_price:
+                print(f"{ticker}: Quantity: {info['quantity']}, Current Price: ${current_price:.2f}, Total Value: ${current_price * info['quantity']:.2f}")
+        print(f"Total Portfolio Value: ${self.get_portfolio_value():.2f}")
+
+if __name__ == "__main__":
+    portfolio = StockPortfolio()
+
+    # Sample interaction
+    while True:
+        print("\nOptions:")
+        print("1. Add stock")
+        print("2. Remove stock")
+        print("3. Display portfolio")
+        print("4. Exit")
+
+        choice = input("Enter choice: ")
+
+        if choice == '1':
+            ticker = input("Enter stock ticker: ").upper()
+            quantity = int(input("Enter quantity: "))
+            portfolio.add_stock(ticker, quantity)
+        elif choice == '2':
+            ticker = input("Enter stock ticker: ").upper()
+            quantity = int(input("Enter quantity: "))
+            portfolio.remove_stock(ticker, quantity)
+        elif choice == '3':
+            portfolio.display_portfolio()
+        elif choice == '4':
+            break
+        else:
+            print("Invalid choice. Please try again.")
